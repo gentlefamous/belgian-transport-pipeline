@@ -43,7 +43,7 @@ Built with the Belgian enterprise data stack: **Kafka** · **PySpark** · **Data
 
 ### Setup
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/belgian-transport-pipeline.git
+git clone https://github.com/gentlefamous/belgian-transport-pipeline.git
 cd belgian-transport-pipeline
 cp .env.example .env  # Fill in your values
 uv sync --extra dev
