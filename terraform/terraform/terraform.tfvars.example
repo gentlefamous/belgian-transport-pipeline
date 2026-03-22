@@ -1,0 +1,4 @@
+subscription_id = "your-azure-subscription-id-here"
+project_name    = "belgian-transport"
+environment     = "dev"
+location        = "westeurope"
