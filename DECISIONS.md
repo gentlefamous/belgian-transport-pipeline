@@ -55,4 +55,22 @@ This document records key technical decisions made during this project, the alte
 
 ---
 
+
+
+## Decision 4: Remote State in Azure Blob Storage
+
+**Date:** 2026-03-23
+**Status:** Accepted
+
+**Context:** Terraform state tracks all managed resources. Storing it locally risks accidental deletion and prevents team collaboration.
+
+**Decision:** Store Terraform state in a dedicated Azure Blob Storage account (`belgiantransporttfstate`) with the `tfstate` container.
+
+**Alternatives considered:**
+- Local state file — rejected because it's not backed up, can't be shared, and risks accidental deletion.
+- Terraform Cloud — viable but adds another service dependency. Azure Blob Storage keeps everything within the Azure ecosystem.
+
+**Reasoning:** Remote state is the production standard. It provides versioning, locking (prevents concurrent modifications), and durability. Using a separate storage account from the data lake keeps infrastructure concerns isolated from data concerns.
+
+---
 *New decisions will be added as the project progresses.*
