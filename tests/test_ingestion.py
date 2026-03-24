@@ -1,9 +1,8 @@
 """Tests for the iRail ingestion module."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from ingestion.irail_client import IRailClient
-
 
 # Sample API response for testing
 MOCK_LIVEBOARD = {

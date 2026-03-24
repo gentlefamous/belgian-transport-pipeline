@@ -73,9 +73,7 @@ class IRailClient:
                     "station_name": station_info.get("standardname", ""),
                     "destination": dep.get("station", ""),
                     "destination_id": dep.get("stationinfo", {}).get("id", ""),
-                    "scheduled_time": datetime.fromtimestamp(
-                        int(dep.get("time", 0)), tz=timezone.utc
-                    ).isoformat(),
+                    "scheduled_time": datetime.fromtimestamp(int(dep.get("time", 0)), tz=timezone.utc).isoformat(),
                     "delay_seconds": int(dep.get("delay", 0)),
                     "canceled": dep.get("canceled", "0") == "1",
                     "vehicle_id": dep.get("vehicle", ""),
