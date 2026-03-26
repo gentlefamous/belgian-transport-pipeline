@@ -72,5 +72,41 @@ This document records key technical decisions made during this project, the alte
 
 **Reasoning:** Remote state is the production standard. It provides versioning, locking (prevents concurrent modifications), and durability. Using a separate storage account from the data lake keeps infrastructure concerns isolated from data concerns.
 
+
+---
+
+## Decision 5: Kafka with KRaft Mode over Zookeeper
+
+**Date:** 2026-03-26
+**Status:** Accepted
+
+**Context:** Needed a streaming layer between the API and the data lake to decouple the producer from the consumer and enable message replay.
+
+**Decision:** Apache Kafka running in Docker with KRaft mode (no Zookeeper).
+
+**Alternatives considered:**
+- Direct API-to-ADLS writes (what we had before) — rejected because it tightly couples ingestion to storage. If ADLS goes down, data is lost.
+- Kafka with Zookeeper — rejected because Zookeeper is a legacy dependency removed in Kafka 3.x+. KRaft is simpler and the modern standard.
+- Azure Event Hubs — viable for production but adds Azure cost. Local Kafka in Docker is free for development.
+- Simple polling with Airflow — rejected because it doesn't provide message replay or consumer decoupling.
+
+**Reasoning:** Kafka adds three production benefits: decoupling (producer and consumer fail independently), replay (messages kept for 24 hours), and fan-out (multiple consumers can read the same messages). KRaft mode eliminates the Zookeeper dependency, reducing our docker-compose from 2 services to 1. The dead-letter queue pattern handles malformed messages without crashing the pipeline.
+
+---
+
+## Decision 6: Batch Consumer with Configurable Flush
+
+**Date:** 2026-03-26
+**Status:** Accepted
+
+**Context:** Needed to decide how the Kafka consumer writes data — one file per message or batched writes.
+
+**Decision:** Batch consumer that flushes when batch_size (100) is reached or batch_timeout (60 seconds) elapses, whichever comes first.
+
+**Alternatives considered:**
+- One Parquet file per message — rejected because it creates thousands of tiny files, which degrades data lake query performance (the "small files problem").
+- Time-only batching — rejected because it doesn't cap file size. A burst of messages could create excessively large files.
+
+**Reasoning:** The dual trigger (size OR time) balances throughput with latency. During high activity, batches flush at 100 messages for consistent file sizes. During quiet periods, the timeout ensures data isn't stuck in memory indefinitely. This is the standard pattern in production streaming pipelines. 
 ---
 *New decisions will be added as the project progresses.*
