@@ -108,5 +108,42 @@ This document records key technical decisions made during this project, the alte
 - Time-only batching — rejected because it doesn't cap file size. A burst of messages could create excessively large files.
 
 **Reasoning:** The dual trigger (size OR time) balances throughput with latency. During high activity, batches flush at 100 messages for consistent file sizes. During quiet periods, the timeout ensures data isn't stuck in memory indefinitely. This is the standard pattern in production streaming pipelines. 
+
+---
+
+## Decision 7: Airflow with TaskFlow API
+
+**Date:** 2026-04-04
+**Status:** Accepted
+
+**Context:** Needed an orchestrator to schedule and automate the full pipeline: ingest → Kafka → Spark → dbt → test.
+
+**Decision:** Apache Airflow using the TaskFlow API (@dag and @task decorators) with a local pipeline runner for Windows development.
+
+**Alternatives considered:**
+- Prefect — simpler API but less market adoption in Belgium. Airflow is the most requested orchestrator in Belgian job postings.
+- Dagster — strong data asset model but smaller community. Better for greenfield projects.
+- Cron jobs — too simple, no retry logic, no dependency management, no monitoring.
+
+**Reasoning:** Airflow is the industry standard for data pipeline orchestration. The TaskFlow API (Airflow 2.x+) simplifies DAG creation with Python decorators instead of manual operator configuration. Since Airflow doesn't support Windows natively, we created a parallel `run_pipeline.py` script that executes the same steps sequentially for local development. The DAG is production-ready for deployment on Linux-based Airflow instances.
+
+---
+
+## Decision 8: DuckDB for Local dbt Development
+
+**Date:** 2026-04-04
+**Status:** Accepted
+
+**Context:** Needed a database backend for dbt to build dimensional models locally without Azure costs.
+
+**Decision:** DuckDB as the local dbt backend, with models written to be compatible with Databricks for production.
+
+**Alternatives considered:**
+- Databricks Community Edition — free but can't connect to ADLS, limited scheduling. Would require data upload for every run.
+- Snowflake — 30-day trial creates time pressure. Not aligned with Belgian market stack.
+- PostgreSQL in Docker — viable but adds container complexity for a simple analytical workload.
+
+**Reasoning:** DuckDB runs as a single file with zero setup, reads Parquet natively, and has a SQL dialect compatible with Databricks. The dbt SQL models are identical regardless of backend — switching to Databricks means changing one config file, not rewriting models. This approach enables fast local development while keeping production code ready for Azure Databricks.
+
 ---
 *New decisions will be added as the project progresses.*
