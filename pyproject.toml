@@ -5,6 +5,7 @@ description = "End-to-end Belgian public transport data pipeline — iRail + De 
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "apache-airflow>=3.1.8",
     "azure-identity>=1.25.3",
     "azure-storage-file-datalake>=12.23.0",
     "confluent-kafka>=2.13.2",
