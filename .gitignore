@@ -46,3 +46,6 @@ htmlcov/
 # Airflow
 airflow/logs/
 airflow/airflow.db
+
+# DuckDB
+*.duckdb

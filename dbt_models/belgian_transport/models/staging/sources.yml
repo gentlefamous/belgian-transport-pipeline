@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw_transport
+    description: "Processed departure data from PySpark"
+    meta:
+      external_location: "../../data/processed/**/*.parquet"
+    tables:
+      - name: departures
+        description: "Cleaned Belgian train departures with delay and scheduling data"

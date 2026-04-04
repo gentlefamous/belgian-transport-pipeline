@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_departures
+    description: "Staged departure data — cleaned, typed, and keyed"
+    columns:
+      - name: departure_key
+        description: "Surrogate key: md5(station_id + vehicle_id + scheduled_time)"
+        tests:
+          - unique
+          - not_null
+      - name: station_id
+        description: "Belgian railway station identifier"
+        tests:
+          - not_null
+      - name: vehicle_id
+        description: "Train vehicle identifier"
+        tests:
+          - not_null
+      - name: delay_seconds
+        description: "Delay in seconds (0 = on time)"
+      - name: is_canceled
+        description: "Whether the departure was canceled"
+        tests:
+          - accepted_values:
+              values: [true, false]
+      - name: occupancy
+        description: "Train occupancy level"
+        tests:
+          - accepted_values:
+              values: ["low", "medium", "high", "unknown"]

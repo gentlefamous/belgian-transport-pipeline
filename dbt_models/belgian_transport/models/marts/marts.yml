@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: dim_stations
+    description: "Station dimension — one row per unique station"
+    columns:
+      - name: station_id
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_time
+    description: "Time dimension — one row per hour of day"
+    columns:
+      - name: hour_of_day
+        tests:
+          - unique
+          - not_null
+
+  - name: fct_delays
+    description: "Fact table — one row per departure event"
+    columns:
+      - name: departure_key
+        tests:
+          - unique
+          - not_null
+      - name: station_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_stations')
+              field: station_id
+
+  - name: mart_delay_summary
+    description: "Pre-computed delay metrics per station per hour"
+    columns:
+      - name: total_departures
+        tests:
+          - not_null
+      - name: delay_rate_pct
+        tests:
+          - not_null
