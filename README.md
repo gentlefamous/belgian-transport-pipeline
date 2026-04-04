@@ -36,18 +36,71 @@ Built with the Belgian enterprise data stack: **Kafka** · **PySpark** · **Data
 ### Prerequisites
 
 - Python 3.11+
-- uv (package manager)
+- [uv](https://docs.astral.sh/uv/) (Python package manager)
 - Docker & docker-compose
 - Terraform
 - Azure account (free tier)
+- Git
 
-### Setup
+### Quick Start
 ```bash
+# 1. Clone the repository
 git clone https://github.com/gentlefamous/belgian-transport-pipeline.git
 cd belgian-transport-pipeline
-cp .env.example .env 
-uv sync --extra dev
+
+# 2. Set up environment
+cp .env.example .env          # Fill in your Azure values
+uv sync --extra dev           # Install all dependencies
+
+# 3. Provision Azure infrastructure
+cd terraform
+terraform init
+terraform apply               # Type 'yes' to confirm
+cd ..
+
+# 4. Start Kafka
+docker compose up -d
+
+# 5. Run the full pipeline
+uv run python -m orchestration.run_pipeline
+
+# 6. Launch the dashboard
+uv run streamlit run dashboard/app.py
 ```
+
+### Running Individual Components
+```bash
+# Ingest data from iRail API
+uv run python -m ingestion.main
+
+# Run PySpark cleaning
+uv run python -m processing.spark_clean
+
+# Run dbt models and tests
+cd dbt_models/belgian_transport
+dbt run
+dbt test
+
+# Run all unit tests
+uv run pytest tests/ -v
+
+# Run code quality checks
+uv run flake8 ingestion/ processing/ orchestration/ tests/ --max-line-length 120
+uv run black --check ingestion/ processing/ orchestration/ tests/ --line-length 120
+```
+
+### Tear Down
+```bash
+# Stop Kafka
+docker compose down
+
+# Destroy Azure resources (saves costs)
+cd terraform && terraform destroy
+```
+
+## Problem Statement
+
+Belgian train commuters face delays but lack accessible, data-driven insights into delay patterns. This project builds an end-to-end data pipeline that ingests real-time departure data from the SNCB/NMBS railway network, identifies delay patterns by station, time of day, and route, and serves interactive analytics through a live dashboard. The pipeline demonstrates production-grade data engineering practices including streaming ingestion, infrastructure-as-code, dimensional modeling, automated testing, and CI/CD.
 
 ## Project Structure
 ```

@@ -1,5 +1,14 @@
 -- Fact table: Delays
 -- Grain: one row per departure event
+-- Partitioned by: departure_date (enables efficient date-range filtering)
+-- Clustering: station_id, departure_hour (most common filter/group-by columns)
+
+{{
+    config(
+        materialized='table',
+        partition_by='departure_date'
+    )
+}}
 
 with departures as (
     select * from {{ ref('stg_departures') }}
