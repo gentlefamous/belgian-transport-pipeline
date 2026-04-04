@@ -10,6 +10,7 @@ dependencies = [
     "confluent-kafka>=2.13.2",
     "pandas>=3.0.1",
     "pyarrow>=23.0.1",
+    "pyspark>=4.1.1",
     "python-dotenv>=1.2.2",
     "requests>=2.32.5",
 ]
