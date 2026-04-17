@@ -17,3 +17,8 @@ output "key_vault_name" {
   description = "Name of the Key Vault"
   value       = module.security.key_vault_name
 }
+
+output "databricks_workspace_url" {
+  description = "URL of the Databricks workspace"
+  value       = module.compute.databricks_workspace_url
+}
