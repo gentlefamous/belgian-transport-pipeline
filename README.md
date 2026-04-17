@@ -134,6 +134,7 @@ make clean
 
 ## Project Structure
 
+```
 belgian-transport-pipeline/
 ├── .github/workflows/ci.yml    # CI pipeline: lint + test + Terraform
 ├── ingestion/                   # iRail API client, Kafka producer/consumer
@@ -147,6 +148,7 @@ belgian-transport-pipeline/
 ├── Makefile                     # Project commands
 ├── DECISIONS.md                 # 8 architectural decision records
 └── README.md
+```
 
 ## GDPR & Data Governance
 
