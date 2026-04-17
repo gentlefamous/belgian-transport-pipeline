@@ -111,21 +111,21 @@ This document records key technical decisions made during this project, the alte
 
 ---
 
-## Decision 7: Airflow with TaskFlow API
+## Decision 7: Airflow 3.x with TaskFlow API
 
 **Date:** 2026-04-04
 **Status:** Accepted
 
 **Context:** Needed an orchestrator to schedule and automate the full pipeline: ingest → Kafka → Spark → dbt → test.
 
-**Decision:** Apache Airflow using the TaskFlow API (@dag and @task decorators) with a local pipeline runner for Windows development.
+**Decision:** Apache Airflow 3.x using the TaskFlow API (from airflow.sdk import dag, task) with a local pipeline runner for Windows development.
 
 **Alternatives considered:**
 - Prefect — simpler API but less market adoption in Belgium. Airflow is the most requested orchestrator in Belgian job postings.
 - Dagster — strong data asset model but smaller community. Better for greenfield projects.
 - Cron jobs — too simple, no retry logic, no dependency management, no monitoring.
 
-**Reasoning:** Airflow is the industry standard for data pipeline orchestration. The TaskFlow API (Airflow 2.x+) simplifies DAG creation with Python decorators instead of manual operator configuration. Since Airflow doesn't support Windows natively, we created a parallel `run_pipeline.py` script that executes the same steps sequentially for local development. The DAG is production-ready for deployment on Linux-based Airflow instances.
+**Reasoning:** Airflow is the industry standard for data pipeline orchestration. The TaskFlow API (Airflow 3.x+) simplifies DAG creation with Python decorators instead of manual operator configuration. Since Airflow doesn't support Windows natively, we created a parallel `run_pipeline.py` script that executes the same steps sequentially for local development. The DAG is production-ready for deployment on Linux-based Airflow instances.
 
 ---
 
