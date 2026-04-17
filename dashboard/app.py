@@ -11,7 +11,7 @@ import streamlit as st
 
 # Page config
 st.set_page_config(
-    page_title="Belgian Transport Intelligence",
+    page_title="Belgian Rail Delay Intelligence Platform",
     page_icon="🚂",
     layout="wide",
 )
@@ -65,7 +65,7 @@ except Exception as e:
     st.stop()
 
 # ===== HEADER =====
-st.title("🚂 Belgian Public Transport Intelligence Platform")
+st.title("🚂 Belgian Rail Delay Intelligence Platform")
 st.markdown("Real-time delay analytics for SNCB/NMBS train departures across Belgium")
 
 # Show analysis period
