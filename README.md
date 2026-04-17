@@ -1,59 +1,75 @@
-# Belgian Public Transport AI Intelligence Platform
+# 🚂 Belgian Public Transport Delay Analytics Platform
 
-[![CI Pipeline](https://github.com/gentlefamous/belgian-transport-pipeline/actions/workflows/ci.yml/badge.svg)]
-(https://github.com/gentlefamous/belgian-transport-pipeline/actions/workflows/ci.yml)
+[![CI Pipeline](https://github.com/gentlefamous/belgian-transport-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/gentlefamous/belgian-transport-pipeline/actions/workflows/ci.yml)
 
-An end-to-end data engineering pipeline that ingests real-time Belgian public transport data (SNCB trains + De Lijn buses), transforms it into analytical models, and serves insights through an interactive dashboard.
+## Problem Statement
 
-Built with the Belgian enterprise data stack: **Kafka** · **PySpark** · **Databricks** · **dbt** · **Airflow** · **Terraform** · **GitHub Actions**
+Belgian train commuters face frequent delays but lack accessible, data-driven insights into delay patterns. This project builds an end-to-end data pipeline that ingests real-time departure data from the SNCB/NMBS railway network, identifies delay patterns by station, time of day, and route, and serves interactive analytics through a live dashboard.
 
----
+The pipeline demonstrates production-grade data engineering practices including streaming ingestion, infrastructure-as-code, dimensional modeling, automated testing, and CI/CD.
 
 ## Architecture
 
-*Architecture diagram will be added here*
+- **Source:** iRail API provides live SNCB departure data.
+- **Streaming layer:** Apache Kafka in KRaft mode ingests event streams through the `departures` topic and routes failures to a `dead_letter_queue`.
+- **Storage layer:** Azure Data Lake Storage Gen2 stores raw and processed datasets for traceability and downstream processing.
+- **Processing layer:** PySpark performs cleaning, deduplication, validation, and enrichment.
+- **Transformation layer:** dbt Core with DuckDB models the data into staging, fact, dimension, and mart tables.
+- **Presentation layer:** Streamlit exposes KPIs, delay heatmaps, and trend analysis in a dashboard.
+- **Orchestration:** Apache Airflow
+- **Infrastructure:** Terraform on Azure
+- **CI/CD:** GitHub Actions
+
 
 ## Tech Stack
 
 | Layer | Tool | Purpose |
 |-------|------|---------|
-| Ingestion | Python + iRail API + De Lijn GTFS-RT | Real-time Belgian transport data |
-| Streaming | Apache Kafka (KRaft mode) | Event streaming pipeline |
-| Processing | PySpark on Databricks | Data cleaning and transformation |
-| Transformation | dbt Core | Dimensional modeling and testing |
-| Orchestration | Apache Airflow | Pipeline scheduling and monitoring |
-| Infrastructure | Terraform | Azure resources as code |
-| CI/CD | GitHub Actions | Automated testing and deployment |
-| Dashboard | Streamlit | Interactive analytics interface |
+| Ingestion | Python + iRail API | Real-time SNCB train departure data |
+| Streaming | Apache Kafka (KRaft) | Event streaming with dead-letter queue |
+| Storage | Azure Data Lake Gen2 | Raw and processed data lake containers |
+| Processing | PySpark | Cleaning, deduplication, derived columns |
+| Transformation | dbt Core | Dimensional modeling with 16 automated tests |
+| Warehouse | DuckDB | Analytical query engine (dbt models are backend-portable to Databricks) |
+| Orchestration | Apache Airflow | Pipeline scheduling with TaskFlow API |
+| Infrastructure | Terraform | Azure resources as code with remote state |
+| CI/CD | GitHub Actions | Linting, testing, Terraform validation on every push |
+| Dashboard | Streamlit + Plotly | Interactive delay analytics with 5 chart types |
 | Secrets | Azure Key Vault | GDPR-compliant credential management |
+
+## Dashboard
+
+The dashboard displays delay analytics across 5 major Belgian stations:
+
+- **KPI cards** — total departures, delayed trains, delay rate, average delay
+- **Delay by station** — horizontal bar chart ranking stations by delay rate
+- **Delay by hour** — line chart showing when delays peak during the day
+- **Delay by time period** — bar chart comparing morning, afternoon, evening, night
+- **Delay heatmap** — station × hour matrix showing delay hotspots
+- **Occupancy analysis** — relationship between crowding and delays
 
 ## Data Model
 
-┌─────────────┐     ┌──────────────┐     ┌───────────┐
-│ dim_stations│     │  fct_delays  │     │ dim_time  │
-├─────────────┤     ├──────────────┤     ├───────────┤
-│ station_id  │◄────│ station_id   │     │hour_of_day│
-│ station_name│     │ departure_key│────►│is_peak_hr │
-│ name_primary│     │ delay_seconds│     │time_period│
-└─────────────┘     │ is_delayed   │     └───────────┘
-│ is_canceled  │
-│ departure_hr │
-│ vehicle_type │
-└──────┬───────┘
-│
-▼
-┌─────────────────┐
-│mart_delay_summary│
-├─────────────────┤
-│ station_id      │
-│ departure_hour  │
-│ total_departures│
-│ delay_rate_pct  │
-│ avg_delay_mins  │
-└─────────────────┘
+**Grain:** `fct_delays` has one row per departure event. `mart_delay_summary` aggregates to one row per station × hour combination.
 
+**Partitioning:** `fct_delays` is partitioned by `departure_date` for efficient date-range filtering.
 
-*Dimensional model diagram will be added here*
+| Table | Type | Description |
+|-------|------|-------------|
+| `stg_departures` | Staging (view) | Cleaned and typed raw departure data with surrogate key |
+| `dim_stations` | Dimension | One row per unique station with primary name extraction |
+| `dim_time` | Dimension | One row per hour of day with peak hour and time period flags |
+| `fct_delays` | Fact | One row per departure event — delays, cancellations, vehicle info |
+| `mart_delay_summary` | Mart | Pre-computed delay metrics per station per hour for dashboard |
+
+## Data Quality
+
+Data quality is enforced at every layer:
+
+- **Ingestion:** JSON schema validation before Kafka publish. Failed messages routed to dead-letter queue.
+- **Processing:** PySpark deduplication on composite key (station_id + vehicle_id + scheduled_time). Null handling and type enforcement.
+- **Transformation:** 16 dbt tests — unique keys, not_null constraints, accepted values, referential integrity between facts and dimensions.
+- **CI/CD:** All 14 Python unit tests and 16 dbt tests run on every push via GitHub Actions.
 
 ## Getting Started
 
@@ -64,9 +80,10 @@ Built with the Belgian enterprise data stack: **Kafka** · **PySpark** · **Data
 - Docker & docker-compose
 - Terraform
 - Azure account (free tier)
-- Git
+- Java JDK 17 (for PySpark)
 
 ### Quick Start
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/gentlefamous/belgian-transport-pipeline.git
@@ -86,74 +103,73 @@ cd ..
 docker compose up -d
 
 # 5. Run the full pipeline
-uv run python -m orchestration.run_pipeline
+make pipeline
 
 # 6. Launch the dashboard
-uv run streamlit run dashboard/app.py
+make dashboard
 ```
 
-### Running Individual Components
+### Available Make Commands
+
 ```bash
-# Ingest data from iRail API
-uv run python -m ingestion.main
-
-# Run PySpark cleaning
-uv run python -m processing.spark_clean
-
-# Run dbt models and tests
-cd dbt_models/belgian_transport
-dbt run
-dbt test
-
-# Run all unit tests
-uv run pytest tests/ -v
-
-# Run code quality checks
-uv run flake8 ingestion/ processing/ orchestration/ tests/ --max-line-length 120
-uv run black --check ingestion/ processing/ orchestration/ tests/ --line-length 120
+make help        # Show all commands
+make ingest      # Fetch data from iRail API
+make process     # Run PySpark cleaning
+make dbt-run     # Build dbt models
+make dbt-test    # Run dbt data quality tests
+make pipeline    # Run full end-to-end pipeline
+make dashboard   # Launch Streamlit dashboard
+make test        # Run Python unit tests
+make lint        # Check code quality
+make format      # Auto-format code
+make clean       # Stop Kafka + destroy Azure resources
 ```
 
 ### Tear Down
+
 ```bash
-# Stop Kafka
-docker compose down
-
-# Destroy Azure resources (saves costs)
-cd terraform && terraform destroy
+# Stop Kafka and destroy Azure resources
+make clean
 ```
-
-## Problem Statement
-
-Belgian train commuters face delays but lack accessible, data-driven insights into delay patterns. This project builds an end-to-end data pipeline that ingests real-time departure data from the SNCB/NMBS railway network, identifies delay patterns by station, time of day, and route, and serves interactive analytics through a live dashboard. The pipeline demonstrates production-grade data engineering practices including streaming ingestion, infrastructure-as-code, dimensional modeling, automated testing, and CI/CD.
 
 ## Project Structure
-```
-belgian-transport-pipeline/
-├── .github/workflows/    # CI/CD pipelines
-├── ingestion/            # Kafka producer + API scripts
-├── processing/           # PySpark transformation jobs
-├── dbt_models/           # dbt dimensional models + tests
-├── orchestration/        # Airflow DAGs
-├── dashboard/            # Streamlit app
-├── terraform/            # Infrastructure as Code (Azure)
-├── tests/                # Unit tests
-├── DECISIONS.md          # Architectural decision log
-└── README.md
-```
 
+belgian-transport-pipeline/
+├── .github/workflows/ci.yml    # CI pipeline: lint + test + Terraform
+├── ingestion/                   # iRail API client, Kafka producer/consumer
+├── processing/                  # PySpark cleaning and deduplication
+├── dbt_models/                  # dbt dimensional models + 16 tests
+├── orchestration/               # Airflow DAG + local pipeline runner
+├── dashboard/                   # Streamlit analytics dashboard
+├── terraform/                   # Azure IaC (ADLS, Key Vault, Databricks, remote state)
+├── tests/                       # 14 Python unit tests
+├── docker-compose.yml           # Kafka (KRaft mode)
+├── Makefile                     # Project commands
+├── DECISIONS.md                 # 8 architectural decision records
+└── README.md
 
 ## GDPR & Data Governance
 
-This project processes publicly available transport schedule data from iRail and De Lijn. No personal data is collected or stored. Security measures implemented:
+This project processes publicly available transport schedule data from iRail. No personal data is collected or stored. Security measures implemented:
 
 - All credentials stored in Azure Key Vault (never in code)
 - `.gitignore` prevents secrets from being committed
 - Secrets scanning enabled in CI pipeline
+- ADLS containers set to private access
 - Data retention policies documented
 
-## Decisions
+## Architectural Decisions
 
-See [DECISIONS.md](DECISIONS.md) for detailed architectural decision records explaining every tool choice.
+See [DECISIONS.md](DECISIONS.md) for detailed records explaining every tool choice, including:
+
+1. Mono-repo with domain folders
+2. uv + pyproject.toml over pip
+3. Git Bash on Windows
+4. Terraform remote state in Azure
+5. Kafka with KRaft mode (no Zookeeper)
+6. Batch consumer with dual flush triggers
+7. Airflow with TaskFlow API
+8. DuckDB for local dbt development
 
 ## License
 
