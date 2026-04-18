@@ -10,6 +10,8 @@ The pipeline demonstrates production-grade data engineering practices including 
 
 ## Architecture
 
+![Dashboard Preview](docs/dashboard_preview.png)
+
 - **Source:** iRail API provides live SNCB departure data.
 - **Streaming layer:** Apache Kafka in KRaft mode ingests event streams through the `departures` topic and routes failures to a `dead_letter_queue`.
 - **Storage layer:** Azure Data Lake Storage Gen2 stores raw and processed datasets for traceability and downstream processing.
@@ -38,6 +40,8 @@ The pipeline demonstrates production-grade data engineering practices including 
 | Secrets | Azure Key Vault | GDPR-compliant credential management |
 
 ## Dashboard
+
+![Dashboard Preview](docs/dashboard_preview.png)
 
 The dashboard displays delay analytics across 5 major Belgian stations:
 
