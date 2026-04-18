@@ -10,7 +10,7 @@ The pipeline demonstrates production-grade data engineering practices including 
 
 ## Architecture
 
-![Architecture](docs/architecture.png)
+![Architecture](docs/architecture.svg)
 
 
 - **Source:** iRail API provides live SNCB departure data.
