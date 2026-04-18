@@ -10,7 +10,8 @@ The pipeline demonstrates production-grade data engineering practices including 
 
 ## Architecture
 
-![Dashboard Preview](docs/dashboard_preview.png)
+![Architecture](docs/architecture.png)
+
 
 - **Source:** iRail API provides live SNCB departure data.
 - **Streaming layer:** Apache Kafka in KRaft mode ingests event streams through the `departures` topic and routes failures to a `dead_letter_queue`.
